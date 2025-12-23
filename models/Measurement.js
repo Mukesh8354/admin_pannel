@@ -2,8 +2,16 @@ import mongoose from "mongoose";
 
 const measurementSchema = new mongoose.Schema(
   {
-    unit: { type: String, required: true },
-    description: { type: String },
+    unit: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+    description: {
+      type: String,
+      trim: true,
+    },
   },
   { timestamps: true }
 );
