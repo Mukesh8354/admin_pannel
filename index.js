@@ -8,6 +8,8 @@ import productCategoryRoutes from "./routes/productCategoryRoutes.js";
 import sizeGroupRoutes from "./routes/sizeGroupRoutes.js";
 import KarigarRoutes from "./routes/KarigarRoutes.js";
 import karigarLedgerRoutes from "./routes/karigarLedgerRoutes.js";
+import homeUserRoutes from "./routes/homeUserRoutes.js";
+import schoolColorRoutes from "./routes/schoolColorRoutes.js";
 
 dotenv.config();
 
@@ -24,5 +26,8 @@ app.use("/api/product-categories", productCategoryRoutes);
 app.use("/api/karigar", KarigarRoutes);
 app.use("/api/karigar-ledger", karigarLedgerRoutes);
 app.use("/api/size-groups", sizeGroupRoutes);
+app.use("/api/home-users", homeUserRoutes);
+
+app.use("/api/school-colors", schoolColorRoutes);
 
 app.listen(5000, () => console.log("Server running on port 5000"));
