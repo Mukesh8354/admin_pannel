@@ -25,4 +25,28 @@ router.put("/:id", async (req, res) => {
   res.json(updated);
 });
 
+// DELETE
+router.delete("/:id", async (req, res) => {
+  try {
+    const deleted = await ProductCategory.findByIdAndDelete(req.params.id);
+
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Product category not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Product category deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
 export default router;
