@@ -12,7 +12,13 @@ export const createSize = async (req, res) => {
     }
 
     category = category.trim();
-    size = size.trim().toUpperCase();
+    size = size.trim();
+
+    if (!/^(\d+|\d+x\d+)$/.test(size)) {
+      return res.status(400).json({
+        message: "Size must be like 28 or 12x18",
+      });
+    }
 
     // 🔴 Duplicate check (controller level)
     const exists = await Size.findOne({ size });
@@ -59,7 +65,13 @@ export const updateSize = async (req, res) => {
     }
 
     category = category.trim();
-    size = size.trim().toUpperCase();
+    size = size.trim();
+
+    if (!/^(\d+|\d+x\d+)$/.test(size)) {
+      return res.status(400).json({
+        message: "Size must be like 28 or 12x18",
+      });
+    }
 
     // 🔴 duplicate check except same id
     const duplicate = await Size.findOne({

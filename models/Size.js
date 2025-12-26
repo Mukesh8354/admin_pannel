@@ -11,7 +11,7 @@ const sizeSchema = new mongoose.Schema(
       type: String,
       required: true, // e.g. 12x18
       trim: true,
-      uppercase: true,
+      match: [/^(\d+|\d+x\d+)$/, "Size must be like 28 or 12x18"],
     },
     description: {
       type: String,
