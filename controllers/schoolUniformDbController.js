@@ -4,7 +4,15 @@ export const createSchoolUniform = async (req, res) => {
   try {
     const { category, schoolColor, itemName, sizes } = req.body;
 
-    const imagePaths = req.files?.map((f) => f.filename);
+    // const imagePaths = req.files?.map((f) => f.filename);
+
+    const imagePaths = req.files
+      ? req.files
+          .filter(
+            (file) => file && file.filename && file.filename.includes(".")
+          )
+          .map((file) => file.filename)
+      : [];
 
     if (!category || !schoolColor || !itemName) {
       return res.status(400).json({ message: "Required fields missing" });
@@ -60,7 +68,9 @@ export const updateSchoolUniform = async (req, res) => {
     let newImages = existing.images || [];
 
     if (req.files && req.files.length > 0) {
-      const uploaded = req.files.map((f) => f.filename);
+      const uploaded = req.files
+        .filter((file) => file && file.filename && file.filename.includes("."))
+        .map((file) => file.filename);
       newImages = [...newImages, ...uploaded]; // append new images
     }
 
