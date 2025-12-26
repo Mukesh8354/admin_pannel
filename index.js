@@ -11,6 +11,7 @@ import karigarLedgerRoutes from "./routes/karigarLedgerRoutes.js";
 import homeUserRoutes from "./routes/homeUserRoutes.js";
 import schoolColorRoutes from "./routes/schoolColorRoutes.js";
 import sizeRoutes from "./routes/sizeRoutes.js";
+import schoolUniformRoutes from "./routes/schoolUniformRoutes.js";
 
 dotenv.config();
 
@@ -31,5 +32,6 @@ app.use("/api/home-users", homeUserRoutes);
 
 app.use("/api/school-colors", schoolColorRoutes);
 app.use("/api/sizes", sizeRoutes);
+app.use("/api/school-uniforms", schoolUniformRoutes);
 
 app.listen(5000, () => console.log("Server running on port 5000"));
