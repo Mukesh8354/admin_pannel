@@ -12,7 +12,7 @@ import homeUserRoutes from "./routes/homeUserRoutes.js";
 import schoolColorRoutes from "./routes/schoolColorRoutes.js";
 import sizeRoutes from "./routes/sizeRoutes.js";
 import schoolUniformRoutes from "./routes/schoolUniformRoutes.js";
-
+import rmCategoryRoutes from "./routes/rmCategoryRoutes.js";
 dotenv.config();
 
 const app = express();
@@ -33,5 +33,6 @@ app.use("/api/home-users", homeUserRoutes);
 app.use("/api/school-colors", schoolColorRoutes);
 app.use("/api/sizes", sizeRoutes);
 app.use("/api/school-uniforms", schoolUniformRoutes);
+app.use("/api/rm-categories", rmCategoryRoutes);
 
 app.listen(5000, () => console.log("Server running on port 5000"));
