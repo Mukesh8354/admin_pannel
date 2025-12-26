@@ -3,7 +3,7 @@ import Size from "../models/Size.js";
 // CREATE SIZE
 export const createSize = async (req, res) => {
   try {
-    const { category, size } = req.body;
+    let { category, size } = req.body;
 
     if (!category || !size) {
       return res
@@ -11,10 +11,29 @@ export const createSize = async (req, res) => {
         .json({ message: "Category and Size are required" });
     }
 
-    const data = await Size.create(req.body);
+    category = category.trim();
+    size = size.trim().toUpperCase();
+
+    // 🔴 Duplicate check (controller level)
+    const exists = await Size.findOne({ size });
+    if (exists) {
+      return res.status(409).json({
+        message: "This size already exists in this category",
+      });
+    }
+
+    const data = await Size.create({ category, size });
     res.status(201).json(data);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    // 🔴 DUPLICATE ERROR HANDLE
+    if (err.code === 11000) {
+      return res.status(409).json({
+        message: "Duplicate size not allowed",
+      });
+    }
+
+    console.error("SIZE CREATE ERROR:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -31,9 +50,35 @@ export const getSizes = async (req, res) => {
 // UPDATE SIZE
 export const updateSize = async (req, res) => {
   try {
-    const updated = await Size.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
+    let { category, size } = req.body;
+
+    if (!category || !size) {
+      return res
+        .status(400)
+        .json({ message: "Category and Size are required" });
+    }
+
+    category = category.trim();
+    size = size.trim().toUpperCase();
+
+    // 🔴 duplicate check except same id
+    const duplicate = await Size.findOne({
+      size,
+      _id: { $ne: req.params.id },
     });
+
+    if (duplicate) {
+      return res.status(409).json({
+        message: "This size already exists in this category",
+      });
+    }
+
+    const updated = await Size.findByIdAndUpdate(
+      req.params.id,
+      { category, size },
+      { new: true }
+    );
+
     res.json(updated);
   } catch (err) {
     res.status(500).json({ message: err.message });

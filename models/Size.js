@@ -11,6 +11,7 @@ const sizeSchema = new mongoose.Schema(
       type: String,
       required: true, // e.g. 12x18
       trim: true,
+      uppercase: true,
     },
     description: {
       type: String,
