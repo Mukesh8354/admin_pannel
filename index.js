@@ -13,6 +13,9 @@ import schoolColorRoutes from "./routes/schoolColorRoutes.js";
 import sizeRoutes from "./routes/sizeRoutes.js";
 import schoolUniformRoutes from "./routes/schoolUniformRoutes.js";
 import rmCategoryRoutes from "./routes/rmCategoryRoutes.js";
+import rawMaterialRoutes from "./routes/rawMaterialRoutes.js";
+import averageRoutes from "./routes/averageRoutes.js";
+
 dotenv.config();
 
 const app = express();
@@ -36,5 +39,9 @@ app.use("/api/school-uniforms", schoolUniformRoutes);
 app.use("/api/rm-categories", rmCategoryRoutes);
 
 app.use("/api/uploads", express.static("uploads"));
+
+app.use("/api/raw-materials", rawMaterialRoutes);
+
+app.use("/api/average", averageRoutes);
 
 app.listen(5000, () => console.log("Server running on port 5000"));

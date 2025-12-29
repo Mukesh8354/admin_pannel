@@ -131,3 +131,25 @@ export const updateSizeGroup = async (req, res) => {
     });
   }
 };
+
+export const getSizeMapping = async (req, res) => {
+  try {
+    const { category } = req.params;
+
+    const mapping = await SizeGroup.findOne({ category });
+
+    if (!mapping) {
+      return res.status(404).json({
+        message: "No size mapping found",
+        sizes: [],
+      });
+    }
+
+    res.json({
+      category: mapping.category,
+      sizes: mapping.sizes, // ["34x24", "34x26"]
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
