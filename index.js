@@ -15,6 +15,10 @@ import schoolUniformRoutes from "./routes/schoolUniformRoutes.js";
 import rmCategoryRoutes from "./routes/rmCategoryRoutes.js";
 import rawMaterialRoutes from "./routes/rawMaterialRoutes.js";
 import averageRoutes from "./routes/averageRoutes.js";
+import karigarRoutes from "./routes/KarigarRoutes.js";
+import itemConsumptionRoutes from "./routes/itemConsumptionRoutes.js";
+
+import supplierRoutes from "./routes/purchase_routes/supplierRoutes.js";
 
 dotenv.config();
 
@@ -43,5 +47,12 @@ app.use("/api/uploads", express.static("uploads"));
 app.use("/api/raw-materials", rawMaterialRoutes);
 
 app.use("/api/average", averageRoutes);
+
+app.use("/api/karigars", karigarRoutes);
+
+app.use("/api/item-consumption", itemConsumptionRoutes);
+
+//Purchase Api
+app.use("/api/suppliers", supplierRoutes);
 
 app.listen(5000, () => console.log("Server running on port 5000"));
