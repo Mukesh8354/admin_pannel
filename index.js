@@ -19,6 +19,8 @@ import karigarRoutes from "./routes/KarigarRoutes.js";
 import itemConsumptionRoutes from "./routes/itemConsumptionRoutes.js";
 
 import supplierRoutes from "./routes/purchase_routes/supplierRoutes.js";
+import purchaseItemRoutes from "./routes/purchase_routes/purchaseItemRoutes.js";
+import componentCostRoutes from "./routes/componentCostRoutes.js";
 
 dotenv.config();
 
@@ -32,7 +34,7 @@ connectDB();
 // app.use("/api/auth", authRoutes);
 app.use("/api/measurements", measurmentRoutes);
 app.use("/api/product-categories", productCategoryRoutes);
-app.use("/api/karigar", KarigarRoutes);
+// app.use("/api/karigar", KarigarRoutes);
 app.use("/api/karigar-ledger", karigarLedgerRoutes);
 app.use("/api/size-groups", sizeGroupRoutes);
 app.use("/api/home-users", homeUserRoutes);
@@ -49,10 +51,15 @@ app.use("/api/raw-materials", rawMaterialRoutes);
 app.use("/api/average", averageRoutes);
 
 app.use("/api/karigars", karigarRoutes);
+// app.use("api/karigar-ledger",karigarLedgerRoutes);
 
 app.use("/api/item-consumption", itemConsumptionRoutes);
 
 //Purchase Api
 app.use("/api/suppliers", supplierRoutes);
+
+app.use("/api/component-costs", componentCostRoutes);
+
+app.use("/api/purchase-items", purchaseItemRoutes);
 
 app.listen(5000, () => console.log("Server running on port 5000"));

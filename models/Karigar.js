@@ -14,6 +14,12 @@ const karigarSchema = new mongoose.Schema(
       otherDocument: String,
       photo: String,
     },
+
+    // 👉 CURRENT BALANCE (Amount To Be Paid)
+    balanceAmount: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );

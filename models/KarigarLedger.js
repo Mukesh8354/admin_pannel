@@ -1,18 +1,19 @@
 import mongoose from "mongoose";
-
-const ledgerSchema = new mongoose.Schema(
+// models/KarigarLedger.js
+const karigarLedgerSchema = new mongoose.Schema(
   {
     karigarId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Karigar",
       required: true,
     },
-    date: { type: Date, default: Date.now },
-    particular: String,
-    debit: { type: Number, default: 0 },
-    credit: { type: Number, default: 0 },
+    description: String,
+    credit: Number, // payment given (advance)
+    debit: Number, // work amount (optional future use)
+    balanceAfter: Number,
+    date: Date,
   },
   { timestamps: true }
 );
 
-export default mongoose.model("KarigarLedger", ledgerSchema);
+export default mongoose.model("KarigarLedger", karigarLedgerSchema);

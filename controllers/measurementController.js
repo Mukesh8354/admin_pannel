@@ -15,23 +15,23 @@ const hasThreeRepeatedLetters = (value) => {
   return /(.)\1\1/.test(value.toLowerCase());
 };
 
+const normalize = (v = "") => v.toString().trim().toLowerCase();
+
 /* ================= CREATE ================= */
 
 export const createMeasurement = async (req, res) => {
   try {
-    let { unit, description } = req.body;
+    let unit = normalize(req.body.unit);
+    let description = normalize(req.body.description);
 
-    // REQUIRED
-    if (!unit || unit.trim() === "") {
+    if (!unit) {
       return res.status(400).json({
         success: false,
         message: "Unit is required",
       });
     }
 
-    unit = unit.trim();
-
-    // ONLY LETTERS
+    // only letters
     if (!isOnlyText(unit)) {
       return res.status(400).json({
         success: false,
@@ -39,7 +39,6 @@ export const createMeasurement = async (req, res) => {
       });
     }
 
-    // MIN LENGTH
     if (!hasMinLength(unit)) {
       return res.status(400).json({
         success: false,
@@ -47,7 +46,6 @@ export const createMeasurement = async (req, res) => {
       });
     }
 
-    // SAME LETTER REPEAT BLOCK
     if (hasThreeRepeatedLetters(unit)) {
       return res.status(400).json({
         success: false,
@@ -55,22 +53,28 @@ export const createMeasurement = async (req, res) => {
       });
     }
 
-    // FORMAT (optional)
-    unit = unit.charAt(0).toUpperCase() + unit.slice(1).toLowerCase();
+    // Display format
+    unit = unit.charAt(0).toUpperCase() + unit.slice(1);
 
-    // DUPLICATE CHECK (case-insensitive)
+    // 🔎 STRICT DUPLICATE CHECK
     const exists = await Measurement.findOne({
-      unit: { $regex: new RegExp("^" + unit + "$", "i") },
+      $or: [
+        { unit: new RegExp(`^${unit}$`, "i") },
+        description
+          ? { description: new RegExp(`^${description}$`, "i") }
+          : null,
+        description ? { unit: new RegExp(`^${description}$`, "i") } : null,
+        { description: new RegExp(`^${unit}$`, "i") },
+      ].filter(Boolean),
     });
 
     if (exists) {
-      return res.status(409).json({
+      return res.status(400).json({
         success: false,
-        message: "Measurement unit already exists",
+        message: "Duplicate unit/description not allowed",
       });
     }
 
-    // SAVE
     const data = await Measurement.create({ unit, description });
 
     res.status(201).json({
@@ -79,9 +83,10 @@ export const createMeasurement = async (req, res) => {
       data,
     });
   } catch (err) {
+    console.error("CREATE ERROR:", err);
     res.status(500).json({
       success: false,
-      message: err.message,
+      message: "Internal server error",
     });
   }
 };
@@ -98,32 +103,44 @@ export const getMeasurements = async (req, res) => {
 export const updateMeasurement = async (req, res) => {
   try {
     const { id } = req.params;
-    let { unit, description } = req.body;
 
-    if (!unit || unit.trim() === "") {
-      return res.status(400).json({ message: "Unit required" });
+    let unit = normalize(req.body.unit);
+    let description = normalize(req.body.description);
+
+    if (!unit) {
+      return res.status(400).json({ message: "Unit is required" });
     }
 
-    unit = unit.trim();
+    unit = unit.charAt(0).toUpperCase() + unit.slice(1);
 
     const exists = await Measurement.findOne({
       _id: { $ne: id },
-      unit: { $regex: new RegExp("^" + unit + "$", "i") },
+      $or: [
+        { unit: new RegExp(`^${unit}$`, "i") },
+        description
+          ? { description: new RegExp(`^${description}$`, "i") }
+          : null,
+        description ? { unit: new RegExp(`^${description}$`, "i") } : null,
+        { description: new RegExp(`^${unit}$`, "i") },
+      ].filter(Boolean),
     });
 
     if (exists) {
-      return res.status(409).json({ message: "Unit already exists" });
+      return res.status(400).json({
+        message: "Duplicate unit/description not allowed",
+      });
     }
 
-    const data = await Measurement.findByIdAndUpdate(
+    const updated = await Measurement.findByIdAndUpdate(
       id,
       { unit, description },
       { new: true }
     );
 
-    res.json({ success: true, data });
+    res.json({ success: true, data: updated });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("UPDATE ERROR:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 

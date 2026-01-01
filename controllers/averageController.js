@@ -9,6 +9,26 @@ export const createAverage = async (req, res) => {
       return res.status(400).json({ message: "Invalid data" });
     }
 
+    // Existing category check
+    const existing = await Average.findOne({ category });
+
+    if (existing) {
+      // size wise duplicate check
+      for (let row of rows) {
+        const sizeExists = existing.rows.find((r) => r.size === row.size);
+
+        console.log(sizeExists);
+
+        if (sizeExists) {
+          return res.status(409).json({
+            message: `Duplicate entry not allowed for category "${category}" and size "${row.size}"`,
+          });
+        }
+      }
+      existing.rows.push(...rows);
+      await existing.save();
+    }
+
     const saved = await Average.create({ category, rows });
     res.status(201).json(saved);
   } catch (err) {
