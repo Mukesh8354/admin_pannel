@@ -1,16 +1,40 @@
 import SchoolColor from "../models/SchoolColor.js";
 
+const normalizeText = (v = "") =>
+  v
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[_\-]+/g, " ") // _  -  → space
+    .replace(/\s+/g, " ");
+
 // CREATE
 export const createSchoolColor = async (req, res) => {
   try {
-    const { schoolColor, description } = req.body;
+    let schoolColor = normalizeText(req.body.schoolColor);
+    let description = normalizeText(req.body.description);
+    // const { schoolColor, description } = req.body;
 
     if (!schoolColor)
       return res.status(400).json({ message: "School/Color is required" });
 
+    // 🔎 STRICT DUPLICATE CHECK
     const exists = await SchoolColor.findOne({
-      schoolColor: schoolColor.toLowerCase().trim(),
+      $or: [
+        { schoolColor: new RegExp(`^${schoolColor}$`, "i") },
+        description
+          ? { description: new RegExp(`^${description}$`, "i") }
+          : null,
+        description
+          ? { schoolColor: new RegExp(`^${description}$`, "i") }
+          : null,
+        { description: new RegExp(`^${schoolColor}$`, "i") },
+      ].filter(Boolean),
     });
+
+    // const exists = await SchoolColor.findOne({
+    //   schoolColor: schoolColor.toLowerCase().trim(),
+    // });
 
     if (exists)
       return res.status(400).json({ message: "School/Color already exists" });

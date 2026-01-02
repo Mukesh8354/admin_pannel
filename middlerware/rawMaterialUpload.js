@@ -1,10 +1,17 @@
 import multer from "multer";
 import path from "path";
+import fs from "fs";
+
+const uploadDir = path.join(process.cwd(), "uploads", "raw-materials");
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // 1️⃣ Storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/raw-materials"); // ✅ specific folder
+    cb(null, uploadDir); // ✅ absolute + existing folder
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
@@ -27,6 +34,6 @@ export const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 2 * 1024 * 1024, // ✅ 2MB limit
+    fileSize: 2 * 1024 * 1024, // 2MB
   },
 });

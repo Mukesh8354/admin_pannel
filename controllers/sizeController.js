@@ -24,12 +24,6 @@ export const createSize = async (req, res) => {
       });
     }
 
-    // if (!) {
-    //   return res.status(400).json({
-    //     message: "Size must be alphanumeric only (A-Z, a-z, 0-9)",
-    //   });
-    // }
-
     // 🔴 Duplicate check (controller level)
     const exists = await Size.findOne({ size });
     if (exists) {
@@ -77,9 +71,13 @@ export const updateSize = async (req, res) => {
     category = category.trim();
     size = size.trim();
 
-    if (!/^(\d+|\d+x\d+)$/.test(size)) {
+    const isNumericOrX = /^(\d+|\d+x\d+)$/.test(size);
+    const isAlphaNumeric = /^[a-zA-Z0-9]+$/.test(size);
+
+    if (!isNumericOrX && !isAlphaNumeric) {
       return res.status(400).json({
-        message: "Size must be like 28 or 12x18",
+        message:
+          "Size must be numeric (28), dimension (12x18), or alphanumeric (XL, M32)",
       });
     }
 

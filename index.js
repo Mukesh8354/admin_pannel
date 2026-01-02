@@ -2,7 +2,6 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
-// import authRoutes from "./routes/authRouter.js";
 import measurmentRoutes from "./routes/measurmentRoutes.js";
 import productCategoryRoutes from "./routes/productCategoryRoutes.js";
 import sizeGroupRoutes from "./routes/sizeGroupRoutes.js";
@@ -21,6 +20,7 @@ import itemConsumptionRoutes from "./routes/itemConsumptionRoutes.js";
 import supplierRoutes from "./routes/purchase_routes/supplierRoutes.js";
 import purchaseItemRoutes from "./routes/purchase_routes/purchaseItemRoutes.js";
 import componentCostRoutes from "./routes/componentCostRoutes.js";
+import asterCompositionRoutes from "./routes/asterCompositionRoutes.js";
 
 dotenv.config();
 
@@ -51,7 +51,6 @@ app.use("/api/raw-materials", rawMaterialRoutes);
 app.use("/api/average", averageRoutes);
 
 app.use("/api/karigars", karigarRoutes);
-// app.use("api/karigar-ledger",karigarLedgerRoutes);
 
 app.use("/api/item-consumption", itemConsumptionRoutes);
 
@@ -61,5 +60,6 @@ app.use("/api/suppliers", supplierRoutes);
 app.use("/api/component-costs", componentCostRoutes);
 
 app.use("/api/purchase-items", purchaseItemRoutes);
+app.use("/api/aster-compositions", asterCompositionRoutes);
 
 app.listen(5000, () => console.log("Server running on port 5000"));

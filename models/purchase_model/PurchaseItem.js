@@ -11,6 +11,8 @@ const purchaseItemSchema = new mongoose.Schema(
     rate: Number,
     quantity: Number,
 
+    width: Number,
+
     gstPercent: Number,
     taxableAmount: Number,
     taxAmount: Number,
