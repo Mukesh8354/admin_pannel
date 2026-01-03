@@ -1,62 +1,67 @@
 import ComponentCost from "../models/ComponentCost.js";
 
-const calculateTotalCost = (rows = []) => {
-  return rows.reduce((sum, r) => {
-    return (
-      sum +
-      (r.basic || 0) +
-      (r.label || 0) +
-      (r.piping || 0) +
-      (r.longpiping || 0) +
-      (r.shoulder || 0) +
-      (r.pocket || 0) +
-      (r.flap || 0) +
-      (r.fashion || 0) +
-      (r.gallis || 0) +
-      (r.extra || 0) +
-      (r.baju || 0) +
-      (r.waist || 0) +
-      (r.ot1 || 0) +
-      (r.ot2 || 0) +
-      (r.ot3 || 0) +
-      (r.ot4 || 0) +
-      (r.ot5 || 0) +
-      (r.othersdescription || 0)
-    );
-  }, 0);
-};
-
 export const createComponentCost = async (req, res) => {
   try {
-    const { category, school, size, rows } = req.body;
+    const { rows } = req.body;
 
-    if (!category || !school || !size || !rows?.length) {
+    if (!Array.isArray(rows) || rows.length === 0) {
       return res.status(400).json({
-        message: "Category, School, Size and rows are required",
+        message: "Rows are required",
       });
     }
 
-    const totalCost = calculateTotalCost(rows);
-
-    // ❌ duplicate check (optional but recommended)
-    const exists = await ComponentCost.findOne({ category, school, size });
-    if (exists) {
-      return res.status(409).json({
-        message: "Component cost already exists for this combination",
-      });
+    for (const r of rows) {
+      if (!r.category || !r.school || !r.size) {
+        return res.status(400).json({
+          message: "Each row must have category, school and size",
+        });
+      }
     }
 
-    const saved = await ComponentCost.create({
-      category,
-      school,
-      size,
-      rows,
-      totalCost,
+    for (const r of rows) {
+      const exists = await ComponentCost.findOne({
+        category: r.category,
+        school: r.school,
+        size: r.size,
+      });
+
+      if (exists) {
+        return res.status(409).json({
+          message: `Component cost already exists for ${r.category} - ${r.school} - ${r.size}`,
+        });
+      }
+    }
+
+    const docs = rows.map((r) => ({
+      ...r,
+      totalCost:
+        (r.basic || 0) +
+        (r.label || 0) +
+        (r.piping || 0) +
+        (r.longpiping || 0) +
+        (r.shoulder || 0) +
+        (r.pocket || 0) +
+        (r.flap || 0) +
+        (r.fashion || 0) +
+        (r.gallis || 0) +
+        (r.extra || 0) +
+        (r.baju || 0) +
+        (r.waist || 0) +
+        (r.ot1 || 0) +
+        (r.ot2 || 0) +
+        (r.ot3 || 0) +
+        (r.ot4 || 0) +
+        (r.ot5 || 0),
+    }));
+
+    const saved = await ComponentCost.insertMany(docs);
+
+    res.status(201).json({
+      message: "Component costs saved successfully",
+      count: saved.length,
     });
-
-    console.log(saved);
-    res.status(201).json(saved);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: err.message });
   }
 };

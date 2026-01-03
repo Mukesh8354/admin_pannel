@@ -5,17 +5,17 @@ export const addPurchaseItem = async (req, res) => {
   try {
     const { supplierId, itemName, rate } = req.body;
 
-    const existingItem = await PurchaseItem.findOne({
+    const existing = await PurchaseItem.findOne({
       supplierId,
-      itemName,
-      rate,
+      purchaseDate: req.body.purchaseDate,
     });
 
-    if (existingItem) {
+    if (existing) {
       return res.status(409).json({
-        message: "Duplicate item not allowed",
+        message: "Purchase already exists for this supplier & date",
       });
     }
+
     const item = new PurchaseItem(req.body);
     await item.save();
     res.status(201).json(item);
@@ -29,6 +29,18 @@ export const getPurchaseItems = async (req, res) => {
   try {
     const items = await PurchaseItem.find().sort({ createdAt: -1 });
     res.json(items);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const getPurchases = async (req, res) => {
+  try {
+    const purchases = await Purchase.find()
+      .populate("supplierId", "supplierName") // 👈 IMPORTANT
+      .sort({ createdAt: -1 });
+
+    res.json(purchases);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const purchaseItemSchema = new mongoose.Schema(
+const PurchaseSchema = new mongoose.Schema(
   {
     supplierId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -53,4 +53,4 @@ const purchaseItemSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model("PurchaseItem", purchaseItemSchema);
+export default mongoose.model("Purchase", PurchaseSchema);

@@ -21,6 +21,8 @@ import supplierRoutes from "./routes/purchase_routes/supplierRoutes.js";
 import purchaseItemRoutes from "./routes/purchase_routes/purchaseItemRoutes.js";
 import componentCostRoutes from "./routes/componentCostRoutes.js";
 import asterCompositionRoutes from "./routes/asterCompositionRoutes.js";
+import customerRoutes from "./routes/customerRoutes.js";
+// import purchaseRoutes from "./routes/purchase_routes/purchaseRoutes.js";
 
 dotenv.config();
 
@@ -61,5 +63,9 @@ app.use("/api/component-costs", componentCostRoutes);
 
 app.use("/api/purchase-items", purchaseItemRoutes);
 app.use("/api/aster-compositions", asterCompositionRoutes);
+
+//Customer
+app.use("/api/customers", customerRoutes);
+// app.use("/api/purchase-items", purchaseRoutes);
 
 app.listen(5000, () => console.log("Server running on port 5000"));
