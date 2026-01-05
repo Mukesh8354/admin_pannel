@@ -1,25 +1,63 @@
 import PurchaseItem from "../../models/purchase_model/PurchaseItem.js";
 
-// POST – save item
 export const addPurchaseItem = async (req, res) => {
   try {
-    const { supplierId, itemName, rate } = req.body;
-
-    const existing = await PurchaseItem.findOne({
+    const {
       supplierId,
-      purchaseDate: req.body.purchaseDate,
-    });
+      supplierName,
+      purchaseDate,
+      creditDays,
+      dueDate,
+      narration,
+      taxableAmount,
+      taxAmount,
+      freightAmount,
+      freightGstPercent,
+      freightGstAmount,
+      totalAmount,
+      items,
+    } = req.body;
 
-    if (existing) {
-      return res.status(409).json({
-        message: "Purchase already exists for this supplier & date",
-      });
+    // ✅ BASIC VALIDATION
+    if (!supplierId) {
+      return res.status(400).json({ message: "supplierId required" });
     }
 
-    const item = new PurchaseItem(req.body);
-    await item.save();
-    res.status(201).json(item);
+    if (!purchaseDate) {
+      return res.status(400).json({ message: "purchaseDate required" });
+    }
+
+    if (!items || !items.length) {
+      return res.status(400).json({ message: "At least one item required" });
+    }
+
+    // ✅ SAFE dueDate fallback
+    let finalDueDate = dueDate;
+    if (!finalDueDate && purchaseDate && creditDays) {
+      const d = new Date(purchaseDate);
+      d.setDate(d.getDate() + Number(creditDays));
+      finalDueDate = d.toISOString().split("T")[0];
+    }
+
+    const purchase = await PurchaseItem.create({
+      supplierId,
+      supplierName,
+      purchaseDate,
+      creditDays,
+      dueDate: finalDueDate,
+      narration,
+      taxableAmount,
+      taxAmount,
+      freightAmount,
+      freightGstPercent,
+      freightGstAmount,
+      totalAmount,
+      items,
+    });
+
+    res.status(201).json(purchase);
   } catch (err) {
+    console.error("PURCHASE SAVE ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -36,8 +74,8 @@ export const getPurchaseItems = async (req, res) => {
 
 export const getPurchases = async (req, res) => {
   try {
-    const purchases = await Purchase.find()
-      .populate("supplierId", "supplierName") // 👈 IMPORTANT
+    const purchases = await PurchaseItem.find()
+      .populate("supplierId", "supplierName")
       .sort({ createdAt: -1 });
 
     res.json(purchases);

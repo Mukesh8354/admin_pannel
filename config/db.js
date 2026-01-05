@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const connectDB = async () => {
   try {
     await mongoose.connect(
-      "mongodb+srv://mukeshstalwartsoft_db_user:mukesh12345@cluster0.a9mmjbm.mongodb.net",
+      "mongodb+srv://mukeshstalwartsoft_db_user:mukesh12345@cluster0.a9mmjbm.mongodb.net/?appName=Cluster0",
       {
         serverSelectionTimeoutMS: 5000,
       }
