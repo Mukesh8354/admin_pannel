@@ -25,6 +25,7 @@ import customerRoutes from "./routes/customerRoutes.js";
 import orderRoutes from "./routes/order_routes/orderRoutes.js";
 import issueClothRoutes from "./routes/order_routes/issueClothRoutes.js";
 import cuttingEntryRoutes from "./routes/order_routes/cuttingEntryRoutes.js";
+import returnClothRoutes from "./routes/order_routes/returnClothRoutes.js";
 
 dotenv.config();
 
@@ -69,5 +70,6 @@ app.use("/api/customers", customerRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/issue-cloth", issueClothRoutes);
 app.use("/api/cutting-entries", cuttingEntryRoutes);
+app.use("/api/return-cloth", returnClothRoutes);
 
 export default app;
