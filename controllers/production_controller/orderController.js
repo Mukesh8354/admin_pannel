@@ -3,8 +3,35 @@ import Order from "../../models/production_model/Order.js";
 /* CREATE */
 export const createOrder = async (req, res) => {
   try {
-    const order = new Order(req.body);
+    const { poNo, orderItems } = req.body;
+
+    // 1️⃣ Same PO No already exists?
+    const poExists = await Order.findOne({ poNo });
+    if (poExists) {
+      return res.status(409).json({ message: "PO No already exists" });
+    }
+
+    // 2️⃣ Duplicate items remove (safety)
+    const uniqueItems = [];
+    const seen = new Set();
+
+    for (const item of orderItems) {
+      const key = `${item.item}-${item.school}-${item.size}-${item.deliveryDate}`;
+
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueItems.push(item);
+      }
+    }
+
+    const order = new Order({
+      ...req.body,
+      orderItems: uniqueItems,
+      totalAmount: uniqueItems.reduce((s, i) => s + i.amount, 0),
+    });
+
     await order.save();
+
     res.status(201).json(order);
   } catch (err) {
     res.status(500).json({ message: err.message });

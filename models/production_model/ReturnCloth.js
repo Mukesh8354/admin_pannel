@@ -29,4 +29,6 @@ const ReturnClothSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+ReturnClothSchema.index({ orderId: 1, poNo: 1, karigar: 1 }, { unique: true });
+
 export default mongoose.model("ReturnCloth", ReturnClothSchema);
