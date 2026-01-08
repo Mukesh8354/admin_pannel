@@ -17,23 +17,25 @@ router.post("/", async (req, res) => {
     });
 
     if (existing) {
-      existing.totals.totalReturnQty += totals.totalReturnQty;
+      // 🔹 totals overwrite (NOT add)
+      existing.totals.totalReturnQty = totals.totalReturnQty;
       existing.totals.usedQty = totals.usedQty;
-
-      // 🔥 ADD THESE LINES
       existing.totals.plannedQty = totals.plannedQty;
       existing.totals.profitQty = totals.profitQty;
       existing.totals.lossQty = totals.lossQty;
+
       if (narration) {
         existing.narration = narration;
       }
+
+      // 🔹 items overwrite
       items.forEach((newItem) => {
         const oldItem = existing.items.find(
           (i) => i.barcode === newItem.barcode
         );
 
         if (oldItem) {
-          oldItem.returnQty += newItem.returnQty;
+          oldItem.returnQty = newItem.returnQty;
           oldItem.usedQty = newItem.usedQty;
         } else {
           existing.items.push(newItem);
@@ -44,7 +46,7 @@ router.post("/", async (req, res) => {
 
       return res.json({
         success: true,
-        merged: true,
+        updated: true,
         data: existing,
       });
     }
