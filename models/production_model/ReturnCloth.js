@@ -13,6 +13,9 @@ const ReturnClothSchema = new mongoose.Schema(
       totalIssueQty: Number,
       totalReturnQty: Number,
       usedQty: Number,
+      plannedQty: Number,
+      profitQty: Number,
+      lossQty: Number,
     },
 
     items: [
