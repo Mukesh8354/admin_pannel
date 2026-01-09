@@ -1,49 +1,30 @@
-import SchoolColor from "../models/SchoolColor.js";
-
-const normalizeText = (v = "") =>
-  v
-    .toString()
-    .trim()
-    .toLowerCase()
-    .replace(/[_\-]+/g, " ") // _  -  → space
-    .replace(/\s+/g, " ");
+import { normalizeText } from "../helper/schoolColorHelper/normalize.js";
+import { checkDuplicateSchoolColor } from "../helper/schoolColorHelper/schoolColorDbHelper.js";
+import {
+  createSchoolColorDB,
+  getSchoolColorsDB,
+  updateSchoolColorDB,
+  deleteSchoolColorDB,
+} from "../helper/schoolColorHelper/schoolColorService.js";
 
 // CREATE
 export const createSchoolColor = async (req, res) => {
   try {
-    let schoolColor = normalizeText(req.body.schoolColor);
-    let description = normalizeText(req.body.description);
-    // const { schoolColor, description } = req.body;
+    const schoolColor = normalizeText(req.body.schoolColor);
+    const description = normalizeText(req.body.description);
 
     if (!schoolColor)
       return res.status(400).json({ message: "School/Color is required" });
 
-    // 🔎 STRICT DUPLICATE CHECK
-    const exists = await SchoolColor.findOne({
-      $or: [
-        { schoolColor: new RegExp(`^${schoolColor}$`, "i") },
-        description
-          ? { description: new RegExp(`^${description}$`, "i") }
-          : null,
-        description
-          ? { schoolColor: new RegExp(`^${description}$`, "i") }
-          : null,
-        { description: new RegExp(`^${schoolColor}$`, "i") },
-      ].filter(Boolean),
-    });
-
-    // const exists = await SchoolColor.findOne({
-    //   schoolColor: schoolColor.toLowerCase().trim(),
-    // });
-
-    if (exists)
-      return res.status(400).json({ message: "School/Color already exists" });
-
-    const data = await SchoolColor.create({
+    const exists = await checkDuplicateSchoolColor({
       schoolColor,
       description,
     });
 
+    if (exists)
+      return res.status(400).json({ message: "School/Color already exists" });
+
+    const data = await createSchoolColorDB({ schoolColor, description });
     res.status(201).json(data);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -52,28 +33,29 @@ export const createSchoolColor = async (req, res) => {
 
 // READ
 export const getSchoolColors = async (req, res) => {
-  const data = await SchoolColor.find().sort({ schoolColor: 1 });
+  const data = await getSchoolColorsDB();
   res.json(data);
 };
 
 // UPDATE
 export const updateSchoolColor = async (req, res) => {
   try {
-    const { schoolColor } = req.body;
+    const schoolColor = normalizeText(req.body.schoolColor);
+    const description = normalizeText(req.body.description);
 
-    const exists = await SchoolColor.findOne({
-      schoolColor: schoolColor.toLowerCase().trim(),
-      _id: { $ne: req.params.id },
+    const exists = await checkDuplicateSchoolColor({
+      schoolColor,
+      description,
+      excludeId: req.params.id,
     });
 
     if (exists)
       return res.status(400).json({ message: "School/Color already exists" });
 
-    const updated = await SchoolColor.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
+    const updated = await updateSchoolColorDB(req.params.id, {
+      schoolColor,
+      description,
+    });
 
     res.json(updated);
   } catch (err) {
@@ -83,6 +65,6 @@ export const updateSchoolColor = async (req, res) => {
 
 // DELETE
 export const deleteSchoolColor = async (req, res) => {
-  await SchoolColor.findByIdAndDelete(req.params.id);
+  await deleteSchoolColorDB(req.params.id);
   res.json({ message: "Deleted successfully" });
 };

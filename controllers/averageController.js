@@ -1,104 +1,98 @@
-import Average from "../models/Average.js";
+// controllers/averageController.js
 
-// CREATE / SAVE
+import {
+  findAverageByCategory,
+  findAverageById,
+} from "../helper/averageHelper/averageDbHelper.js";
+
+import {
+  createAverageDB,
+  getAveragesDB,
+  updateAverageDB,
+  deleteAverageDB,
+  insertAverageRowsDB,
+  upsertAverageRowsDB,
+  createAverageOneTableDB,
+} from "../helper/averageHelper/averageService.js";
+
+import {
+  checkDuplicateSizes,
+  mergeRowsBySize,
+} from "../helper/averageHelper/averageMergeHelper.js";
+
+// CREATE
 export const createAverage = async (req, res) => {
   try {
     const { category, rows } = req.body;
 
-    if (!category || !rows?.length) {
-      return res.status(400).json({ message: "Invalid data" });
+    if (!category) {
+      return res.status(400).json({ message: "Category required" });
     }
 
-    // Existing category check
-    const existing = await Average.findOne({ category });
-
-    if (existing) {
-      // size wise duplicate check
-      for (let row of rows) {
-        const sizeExists = existing.rows.find((r) => r.size === row.size);
-
-        console.log(sizeExists);
-
-        if (sizeExists) {
-          return res.status(409).json({
-            message: `Duplicate entry not allowed for category "${category}" and size "${row.size}"`,
-          });
-        }
-      }
-      existing.rows.push(...rows);
-      await existing.save();
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return res.status(400).json({ message: "Rows array required" });
     }
 
-    const saved = await Average.create({ category, rows });
-    res.status(201).json(saved);
+    await createAverageOneTableDB(category, rows);
+
+    res.status(201).json({ success: true });
   } catch (err) {
+    console.error("CREATE AVERAGE ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
 
+// READ ALL
 export const getAverages = async (req, res) => {
   try {
-    const data = await Average.find().sort({ createdAt: -1 });
+    const data = await getAveragesDB();
     res.json(data);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
+// READ BY ID
 export const getAverageById = async (req, res) => {
   try {
-    const data = await Average.findById(req.params.id);
+    const data = await findAverageById(req.params.id);
+    if (!data) return res.status(404).json({ message: "Not found" });
     res.json(data);
   } catch (err) {
     res.status(404).json({ message: "Not found" });
   }
 };
 
+// UPDATE
 export const updateAverage = async (req, res) => {
-  const { id } = req.params;
-
-  const updated = await Average.findByIdAndUpdate(id, req.body, { new: true });
-
+  const updated = await updateAverageDB(req.params.id, req.body);
   res.json(updated);
 };
 
+// DELETE
 export const deleteAverage = async (req, res) => {
   try {
-    await Average.findByIdAndDelete(req.params.id);
+    await deleteAverageDB(req.params.id);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
+// CREATE OR UPDATE (MERGE)
 export const createOrUpdateAverage = async (req, res) => {
   try {
     const { category, rows } = req.body;
 
-    let existing = await Average.findOne({ category });
+    const existing = await findAverageByCategory(category);
 
-    // ✅ CASE 1: Category exists → MERGE rows
     if (existing) {
-      const mergedMap = new Map();
-
-      // पुरानी rows डालो
-      existing.rows.forEach((r) => {
-        mergedMap.set(r.size, r);
-      });
-
-      // नई rows merge करो
-      rows.forEach((r) => {
-        mergedMap.set(r.size, r); // same size → overwrite
-      });
-
-      existing.rows = Array.from(mergedMap.values());
-      await existing.save();
-
+      existing.rows = mergeRowsBySize(existing.rows, rows);
+      await insertAverageRowsDB(existing.id, rows);
       return res.status(200).json(existing);
     }
 
-    // ✅ CASE 2: New category
-    const created = await Average.create({ category, rows });
+    const created = await createAverageDB({ category, rows });
     res.status(201).json(created);
   } catch (err) {
     res.status(500).json({ message: err.message });

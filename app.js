@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
+import db from "./config/mysql.js";
 
 // routes
 import measurmentRoutes from "./routes/measurmentRoutes.js";
@@ -36,6 +37,16 @@ app.use(express.json());
 
 // DB connect
 connectDB();
+
+(async () => {
+  try {
+    const conn = await db.getConnection();
+    console.log("✅ MySQL Connected");
+    conn.release();
+  } catch (err) {
+    console.error("❌ MySQL Connection Failed", err);
+  }
+})();
 
 // Routes
 app.use("/api/measurements", measurmentRoutes);

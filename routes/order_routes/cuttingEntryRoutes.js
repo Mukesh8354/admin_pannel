@@ -49,6 +49,45 @@ router.get("/", async (req, res) => {
   res.json(data);
 });
 
+// ✅ GET bundles of a cutting entry (FOR STITCHING ISSUE)
+// ✅ GET bundles by ORDER ID (CORRECT)
+router.get("/order/:orderId/bundles", async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    const entries = await CuttingEntry.find({ orderId });
+
+    if (!entries.length) {
+      return res.status(404).json({ message: "No cutting entries found" });
+    }
+
+    const bundles = [];
+
+    entries.forEach((entry) => {
+      entry.items.forEach((item) => {
+        item.bundles.forEach((bundle) => {
+          bundles.push({
+            cuttingEntryId: entry._id,
+
+            bundleNo: bundle.bundleNo,
+            itemName: bundle.itemName,
+            size: bundle.size,
+            pcs: bundle.pcs,
+
+            school: item.school,
+            cost: item.cuttingRate,
+            priority: item.priority,
+          });
+        });
+      });
+    });
+
+    res.json(bundles);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // ✅ READ SINGLE Cutting Entry
 router.get("/:id", async (req, res) => {
   try {

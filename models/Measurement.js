@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+/*import mongoose from "mongoose";
 
 const measurementSchema = new mongoose.Schema(
   {
@@ -16,4 +16,4 @@ const measurementSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model("Measurement", measurementSchema);
+export default mongoose.model("Measurement", measurementSchema);*/

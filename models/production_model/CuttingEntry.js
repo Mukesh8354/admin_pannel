@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 
 const BundleSchema = new mongoose.Schema(
   {
+    itemName: String,
+    size: Number,
     bundleNo: Number,
     pcs: Number,
   },
