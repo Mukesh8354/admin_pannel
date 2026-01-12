@@ -1,4 +1,29 @@
 import express from "express";
+import {
+  createCuttingEntry,
+  getCuttingSummary,
+  getCuttingById,
+  updateCutting,
+  deleteCutting,
+  getCuttingByOrder,
+  getBundlesByOrder,
+  asyncHandler,
+} from "../../helper/production_helper/cuttingEntryHelper.js";
+// import { asyncHandler } from "../../utils/asyncHandler.js";
+
+const router = express.Router();
+
+router.post("/", asyncHandler(createCuttingEntry));
+router.get("/", asyncHandler(getCuttingSummary));
+router.get("/order/:orderId", asyncHandler(getCuttingByOrder));
+router.get("/order/:orderId/bundles", asyncHandler(getBundlesByOrder));
+router.get("/:id", asyncHandler(getCuttingById));
+router.put("/:id", asyncHandler(updateCutting));
+router.delete("/:id", asyncHandler(deleteCutting));
+
+export default router;
+
+/*import express from "express";
 import CuttingEntry from "../../models/production_model/CuttingEntry.js";
 
 const router = express.Router();
@@ -155,4 +180,4 @@ router.get("/order/:orderId", async (req, res) => {
 //   }
 // });
 
-export default router;
+export default router;*/

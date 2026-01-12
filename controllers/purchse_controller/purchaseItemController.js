@@ -139,6 +139,42 @@ export const getPurchases = async (req, res) => {
   }
 };
 
+export const getPurchaseItemsIssue = async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT
+        l.id AS lump_id,
+        l.barcode,
+        l.qty,
+
+        d.item_name        AS itemName,
+        d.hsn_code         AS hsn,
+        d.unit,
+        d.gst_percent      AS gst,
+        d.width,
+        d.rate,
+
+        d.taxable_amount   AS taxableAmount,
+        d.tax_amount       AS taxAmount,
+        d.total_amount     AS totalAmount,
+        d.delivery_date    AS deliveryDate
+
+      FROM purchase_item_lumps l
+      JOIN purchase_item_details d
+        ON d.id = l.purchase_item_detail_id
+      JOIN purchase_items p
+        ON p.id = d.purchase_item_id
+
+      ORDER BY l.id DESC
+    `);
+
+    res.json(rows);
+  } catch (err) {
+    console.error("GET PURCHASE ITEMS ERROR:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
 export const getPurchaseItems = async (req, res) => {
   try {
     const [rows] = await db.query(

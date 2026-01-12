@@ -1,48 +1,129 @@
-import Order from "../../models/production_model/Order.js";
+import db from "../../config/mysql.js";
+import {
+  checkDuplicatePO,
+  removeDuplicateItems,
+  calculateTotalAmount,
+  fetchOrders,
+  fetchOrderById,
+  deleteOrderById,
+} from "../../helper/production_helper/orderHelper.js";
 
 /* CREATE */
+
 export const createOrder = async (req, res) => {
   try {
-    const { poNo, orderItems } = req.body;
+    const {
+      poNo,
+      poDate,
+      deliveryDate,
+      customerId,
+      customerName,
+      contactNo,
+      address,
+      karigar,
+      orderItems,
+    } = req.body;
 
-    // 1️⃣ Same PO No already exists?
-    const poExists = await Order.findOne({ poNo });
-    if (poExists) {
+    if (await checkDuplicatePO(poNo)) {
       return res.status(409).json({ message: "PO No already exists" });
     }
 
-    // 2️⃣ Duplicate items remove (safety)
-    const uniqueItems = [];
-    const seen = new Set();
+    const items = removeDuplicateItems(orderItems);
+    const totalAmount = calculateTotalAmount(items);
 
-    for (const item of orderItems) {
-      const key = `${item.item}-${item.school}-${item.size}-${item.deliveryDate}`;
+    // ✅ FULL INSERT
+    const [orderRes] = await db.query(
+      `INSERT INTO orders
+      (po_no, po_date, delivery_date, customer_id, customer_name, contact_no, address, karigar, total_amount)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        poNo,
+        poDate,
+        deliveryDate,
+        customerId,
+        customerName,
+        contactNo,
+        address,
+        karigar,
+        totalAmount,
+      ]
+    );
 
-      if (!seen.has(key)) {
-        seen.add(key);
-        uniqueItems.push(item);
-      }
+    const orderId = orderRes.insertId;
+
+    // order_items insert
+    for (const i of items) {
+      await db.query(
+        `INSERT INTO order_items
+        (order_id, item, school, size, rate, qty, amount, priority, details, delivery_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          orderId,
+          i.item,
+          i.school,
+          i.size,
+          i.rate,
+          i.qty,
+          i.amount,
+          i.priority,
+          i.details,
+          i.deliveryDate,
+        ]
+      );
     }
 
-    const order = new Order({
-      ...req.body,
-      orderItems: uniqueItems,
-      totalAmount: uniqueItems.reduce((s, i) => s + i.amount, 0),
-    });
-
-    await order.save();
-
-    res.status(201).json(order);
+    res.status(201).json({ message: "Order created", orderId });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
+/*export const createOrder = async (req, res) => {
+  try {
+    const { poNo, orderItems } = req.body;
+
+    if (await checkDuplicatePO(poNo)) {
+      return res.status(409).json({ message: "PO No already exists" });
+    }
+
+    const items = removeDuplicateItems(orderItems);
+    const totalAmount = calculateTotalAmount(items);
+
+    const [orderRes] = await db.query(
+      "INSERT INTO orders (po_no, total_amount) VALUES (?, ?)",
+      [poNo, totalAmount]
+    );
+
+    const orderId = orderRes.insertId;
+
+    for (const i of items) {
+      await db.query(
+        `INSERT INTO order_items
+        (order_id, item, school, size, qty, rate, amount, delivery_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          orderId,
+          i.item,
+          i.school,
+          i.size,
+          i.qty,
+          i.rate,
+          i.amount,
+          i.delivery_date,
+        ]
+      );
+    }
+
+    res.status(201).json({ message: "Order created", orderId });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};*/
+
 /* READ ALL */
 export const getOrders = async (req, res) => {
   try {
-    const orders = await Order.find().sort({ createdAt: -1 });
-    res.json(orders);
+    res.json(await fetchOrders());
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -51,28 +132,10 @@ export const getOrders = async (req, res) => {
 /* READ ONE */
 export const getOrderById = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
-    }
+    const order = await fetchOrderById(req.params.id);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
     res.json(order);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-/* UPDATE */
-export const updateOrder = async (req, res) => {
-  try {
-    const updated = await Order.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-
-    if (!updated) {
-      return res.status(404).json({ message: "Order not found" });
-    }
-
-    res.json(updated);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -81,11 +144,8 @@ export const updateOrder = async (req, res) => {
 /* DELETE */
 export const deleteOrder = async (req, res) => {
   try {
-    const deleted = await Order.findByIdAndDelete(req.params.id);
-
-    if (!deleted) {
+    if (!(await deleteOrderById(req.params.id)))
       return res.status(404).json({ message: "Order not found" });
-    }
 
     res.json({ message: "Order deleted" });
   } catch (err) {

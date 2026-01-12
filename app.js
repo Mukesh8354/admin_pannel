@@ -1,6 +1,8 @@
+import dotenv from "dotenv";
+dotenv.config();
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
+
 import connectDB from "./config/db.js";
 import db from "./config/mysql.js";
 
@@ -27,8 +29,6 @@ import orderRoutes from "./routes/order_routes/orderRoutes.js";
 import issueClothRoutes from "./routes/order_routes/issueClothRoutes.js";
 import cuttingEntryRoutes from "./routes/order_routes/cuttingEntryRoutes.js";
 import returnClothRoutes from "./routes/order_routes/returnClothRoutes.js";
-
-dotenv.config();
 
 const app = express();
 
