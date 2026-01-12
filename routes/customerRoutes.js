@@ -7,8 +7,8 @@ import {
 
 const router = express.Router();
 
-router.post("/", createCustomer); // ➕ Add
-router.get("/", getCustomers); // 📄 List
-router.delete("/:id", deleteCustomer); // ❌ Delete
+router.post("/", createCustomer);
+router.get("/", getCustomers);
+router.delete("/:id", deleteCustomer);
 
 export default router;

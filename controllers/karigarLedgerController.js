@@ -1,69 +1,75 @@
-// controllers/karigarLedgerController.js
-import Karigar from "../models/Karigar.js";
-import KarigarLedger from "../models/KarigarLedger.js";
+import db from "../config/mysql.js";
+import {
+  validateAdvancePayment,
+  getKarigarById,
+  calculateAdvanceBalance,
+  createAdvanceLedger,
+} from "../helper/karigarLedger/karigarLedgerHelper.js";
 
 export const addAdvancePayment = async (req, res) => {
-  console.log("body", req.body);
   try {
     const { karigarId, advanceAmount, description, date } = req.body;
 
-    if (!karigarId || !advanceAmount) {
-      return res.status(400).json({
-        message: "karigarId and advanceAmount are required",
-      });
+    // ✅ validation
+    const error = validateAdvancePayment({ karigarId, advanceAmount });
+    if (error) {
+      return res.status(400).json({ message: error });
     }
 
-    const karigar = await Karigar.findById(karigarId);
+    // ✅ get karigar
+    const karigar = await getKarigarById(karigarId);
 
-    if (!karigarId || advanceAmount === undefined) {
-      return res.status(400).json({
-        message: "karigarId and advanceAmount are required",
-      });
-    }
+    // ✅ calculate new balance
+    const newBalance = calculateAdvanceBalance(
+      karigar.balance_amount,
+      advanceAmount
+    );
 
-    const currentBalance = Number(karigar.balanceAmount || 0);
-    const advance = Number(advanceAmount);
-
-    console.log(currentBalance);
-
-    if (isNaN(advance)) {
-      return res.status(400).json({ message: "Invalid advance amount" });
-    }
-
-    const newBalance = currentBalance - advance;
-
-    // update karigar balance
-    karigar.balanceAmount = newBalance;
-    await karigar.save();
-
-    // ledger entry
-    const ledger = await KarigarLedger.create({
+    // ✅ update karigar balance
+    await db.query("UPDATE karigars SET balance_amount = ? WHERE id = ?", [
+      newBalance,
       karigarId,
-      description: description || "Advance Payment",
-      credit: advance,
-      debit: 0,
-      balanceAfter: newBalance,
-      date: date ? new Date(date) : new Date(),
+    ]);
+
+    // ✅ insert ledger
+    const ledgerId = await createAdvanceLedger({
+      karigarId,
+      advanceAmount,
+      description,
+      newBalance,
+      date,
     });
 
     res.status(201).json({
       message: "Advance payment added",
       balanceAmount: newBalance,
-      ledger,
+      ledgerId,
     });
   } catch (err) {
     console.error("ADVANCE ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };
+
+/* ================= GET LEDGER ================= */
 export const getLedgerList = async (req, res) => {
   try {
-    const data = await KarigarLedger.find()
-      .populate("karigarId", "karigarName")
-      .sort({ createdAt: -1 });
+    const [rows] = await db.query(`
+      SELECT
+        kl.id,
+        kl.karigar_id,
+        k.karigar_name AS karigarName,
+        kl.description,
+        kl.credit AS amount,
+        kl.entry_date AS date
+      FROM karigar_ledgers kl
+      LEFT JOIN karigars k ON k.id = kl.karigar_id
+      ORDER BY kl.created_at DESC
+    `);
 
-    res.json(data);
+    res.json(rows);
   } catch (err) {
+    console.error("LEDGER LIST ERROR:", err);
     res.status(500).json({ message: err.message });
   }
 };

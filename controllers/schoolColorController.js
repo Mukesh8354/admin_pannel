@@ -42,23 +42,31 @@ export const updateSchoolColor = async (req, res) => {
   try {
     const schoolColor = normalizeText(req.body.schoolColor);
     const description = normalizeText(req.body.description);
+    const { id } = req.params;
+
+    if (!schoolColor) {
+      return res.status(400).json({ message: "School/Color is required" });
+    }
 
     const exists = await checkDuplicateSchoolColor({
       schoolColor,
-      description,
-      excludeId: req.params.id,
+      excludeId: id,
     });
 
-    if (exists)
-      return res.status(400).json({ message: "School/Color already exists" });
+    if (exists) {
+      return res.status(400).json({
+        message: "School/Color already exists",
+      });
+    }
 
-    const updated = await updateSchoolColorDB(req.params.id, {
+    const updated = await updateSchoolColorDB(id, {
       schoolColor,
       description,
     });
 
     res.json(updated);
   } catch (err) {
+    console.error("UPDATE school color error:", err);
     res.status(500).json({ message: err.message });
   }
 };

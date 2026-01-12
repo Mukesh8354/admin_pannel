@@ -14,7 +14,12 @@ export const createRawMaterial = async (req, res) => {
 
     res.status(201).json(result.data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("RAW MATERIAL ERROR 👉", error);
+    res.status(500).json({
+      message: error.message,
+      sqlMessage: error.sqlMessage, // 🔥 MySQL real error
+    });
+    // res.status(500).json({ message: error.message });
   }
 };
 
@@ -24,6 +29,11 @@ export const getRawMaterials = async (req, res) => {
     const data = await getRawMaterialsService();
     res.json(data);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("RAW MATERIAL ERROR 👉", error);
+    res.status(500).json({
+      message: err.message,
+      sqlMessage: err.sqlMessage, // 🔥 MySQL real error
+    });
+    // res.status(500).json({ message: err.message });
   }
 };

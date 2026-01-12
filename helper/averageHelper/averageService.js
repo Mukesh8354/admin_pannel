@@ -77,8 +77,15 @@ export const getAveragesDB = async () => {
 };
 
 // UPDATE category
-export const updateAverageDB = async (id, category) => {
-  await db.execute("UPDATE averages SET category=? WHERE id=?", [category, id]);
+export const updateAverageDB = async (id, data) => {
+  const { category, size, c89, c112, c137, c142, c147 } = data;
+
+  await db.execute(
+    `UPDATE averages
+     SET category=?, size=?, c89=?, c112=?, c137=?, c142=?, c147=?
+     WHERE id=?`,
+    [category, size, c89, c112, c137, c142, c147, id]
+  );
 };
 
 // DELETE

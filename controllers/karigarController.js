@@ -1,67 +1,185 @@
-import Karigar from "../models/Karigar.js";
-import fs from "fs";
+import db from "../config/mysql.js";
+import {
+  extractKarigarDocuments,
+  updateKarigarDocuments,
+  deleteKarigarDocuments,
+} from "../helper/karigarHelper/karigarHelper.js";
 
-// CREATE
+import { validateKarigar } from "../helper/karigarHelper/karigarValidationHelper.js";
+
+/* ================= CREATE ================= */
 export const createKarigar = async (req, res) => {
-  try {
-    const k = await Karigar.create({
-      ...req.body,
-      documents: {
-        idProof: req.files?.idProof?.[0]?.filename,
-        addressProof: req.files?.addressProof?.[0]?.filename,
-        electricityBill: req.files?.electricityBill?.[0]?.filename,
-        otherDocument: req.files?.otherDocument?.[0]?.filename,
-        photo: req.files?.photo?.[0]?.filename,
-      },
-    });
+  const { isValid, errors } = await validateKarigar({
+    body: req.body,
+    files: req.files,
+  });
 
-    res.status(201).json(k);
+  if (!isValid) {
+    return res.status(400).json({
+      message: "Validation failed",
+      errors,
+    });
+  }
+  try {
+    const docs = extractKarigarDocuments(req.files);
+
+    const [result] = await db.query(
+      `INSERT INTO karigars
+      (karigar_name, contact_no, current_address, permanent_address,
+       id_proof, address_proof, electricity_bill, other_document, photo)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        req.body.karigarName,
+        req.body.contactNo,
+        req.body.currentAddress,
+        req.body.permanentAddress,
+        docs.idProof,
+        docs.addressProof,
+        docs.electricityBill,
+        docs.otherDocument,
+        docs.photo,
+      ]
+    );
+
+    res.status(201).json({ id: result.insertId });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: err.message });
   }
 };
 
-// GET ALL
+/* ================= GET ALL ================= */
 export const getKarigars = async (req, res) => {
-  const data = await Karigar.find().sort({ createdAt: -1 });
-  res.json(data);
+  try {
+    const [rows] = await db.query(`
+    SELECT
+      id,
+      karigar_name        AS karigarName,
+      contact_no          AS contactNo,
+      current_address     AS currentAddress,
+      permanent_address   AS permanentAddress,
+      id_proof            AS idProof,
+      address_proof       AS addressProof,
+      electricity_bill    AS electricityBill,
+      other_document      AS otherDocument,
+      photo,
+      created_at          AS createdAt
+    FROM karigars
+    ORDER BY id DESC
+  `);
+
+    res.json(rows);
+  } catch (err) {
+    console.error("GET KARIGARS ERROR:", err);
+    res.status(500).json({ message: err.message });
+  }
 };
 
-// GET ONE
+/* ================= GET ONE ================= */
 export const getKarigar = async (req, res) => {
-  const data = await Karigar.findById(req.params.id);
-  res.json(data);
+  try {
+    const [rows] = await db.query(
+      `
+    SELECT
+      id,
+      karigar_name AS karigarName,
+      contact_no AS contactNo,
+      current_address AS currentAddress,
+      permanent_address AS permanentAddress,
+      id_proof AS idProof,
+      address_proof AS addressProof,
+      electricity_bill AS electricityBill,
+      other_document AS otherDocument,
+      photo,
+      created_at AS createdAt
+    FROM karigars
+    WHERE id = ?
+    `,
+      [req.params.id]
+    );
+
+    if (!rows.length) return res.status(404).json({ message: "Not found" });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error("GET KARIGAR ERROR:", err);
+    res.status(500).json({ message: err.message });
+  }
 };
 
-// UPDATE
+/* ================= UPDATE ================= */
 export const updateKarigar = async (req, res) => {
-  const karigar = await Karigar.findById(req.params.id);
-
-  if (!karigar) return res.status(404).json({ message: "Not found" });
-
-  karigar.karigarName = req.body.karigarName;
-  karigar.contactNo = req.body.contactNo;
-  karigar.currentAddress = req.body.currentAddress;
-  karigar.permanentAddress = req.body.permanentAddress;
-
-  Object.keys(req.files || {}).forEach((key) => {
-    karigar.documents[key] = req.files[key][0].filename;
+  const { isValid, errors } = await validateKarigar({
+    body: req.body,
+    files: req.files,
+    karigarId: req.params.id, // 👈 important
   });
 
-  await karigar.save();
-  res.json(karigar);
+  if (!isValid) {
+    return res.status(400).json({
+      message: "Validation failed",
+      errors,
+    });
+  }
+  const [rows] = await db.query("SELECT * FROM karigars WHERE id = ?", [
+    req.params.id,
+  ]);
+  if (!rows.length) return res.status(404).json({ message: "Not found" });
+
+  const docs = updateKarigarDocuments(
+    {
+      idProof: rows[0].id_proof,
+      addressProof: rows[0].address_proof,
+      electricityBill: rows[0].electricity_bill,
+      otherDocument: rows[0].other_document,
+      photo: rows[0].photo,
+    },
+    req.files
+  );
+
+  await db.query(
+    `UPDATE karigars SET
+      karigar_name = ?,
+      contact_no = ?,
+      current_address = ?,
+      permanent_address = ?,
+      id_proof = ?,
+      address_proof = ?,
+      electricity_bill = ?,
+      other_document = ?,
+      photo = ?
+     WHERE id = ?`,
+    [
+      req.body.karigarName,
+      req.body.contactNo,
+      req.body.currentAddress,
+      req.body.permanentAddress,
+      docs.idProof,
+      docs.addressProof,
+      docs.electricityBill,
+      docs.otherDocument,
+      docs.photo,
+      req.params.id,
+    ]
+  );
+
+  res.json({ message: "Updated successfully" });
 };
 
-// DELETE
+/* ================= DELETE ================= */
 export const deleteKarigar = async (req, res) => {
-  const karigar = await Karigar.findById(req.params.id);
+  const [rows] = await db.query("SELECT * FROM karigars WHERE id = ?", [
+    req.params.id,
+  ]);
+  if (!rows.length) return res.status(404).json({ message: "Not found" });
 
-  if (!karigar) return res.status(404).json({ message: "Not found" });
-
-  Object.values(karigar.documents || {}).forEach((file) => {
-    if (file) fs.unlink(`uploads/karigar/${file}`, () => {});
+  deleteKarigarDocuments({
+    idProof: rows[0].id_proof,
+    addressProof: rows[0].address_proof,
+    electricityBill: rows[0].electricity_bill,
+    otherDocument: rows[0].other_document,
+    photo: rows[0].photo,
   });
 
-  await karigar.deleteOne();
+  await db.query("DELETE FROM karigars WHERE id = ?", [req.params.id]);
   res.json({ message: "Deleted successfully" });
 };

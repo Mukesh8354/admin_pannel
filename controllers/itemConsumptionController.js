@@ -15,33 +15,15 @@ export const createItemConsumption = async (req, res) => {
   }
 };*/
 
-import ItemConsumption from "../models/ItemConsumption.js";
+import {
+  createItemConsumptionDB,
+  getItemConsumptionsDB,
+} from "../helper/itemComsuptionHelepr/itemConsumptionHelper.js";
 
+// 👉 CREATE ItemConsumption
 export const createItemConsumption = async (req, res) => {
   try {
-    const { fgCategory, schoolColor, date, items } = req.body;
-
-    // ✅ STEP 1: sirf UNIQUE sizes nikaalo
-    const parentSizesSet = new Set();
-
-    items.forEach((item) => {
-      Object.keys(item.sizeQty || {}).forEach((size) => {
-        parentSizesSet.add(size);
-      });
-    });
-
-    // ✅ STEP 2: Array me convert
-    const parentSizes = Array.from(parentSizesSet);
-    // example: ["18", "20"]
-
-    // ✅ STEP 3: Parent save (sizes ke sath)
-    const saved = await ItemConsumption.create({
-      fgCategory,
-      schoolColor,
-      date,
-      sizes: parentSizes, // 🔥 YAHI MAIN CHANGE
-      items,
-    });
+    const saved = await createItemConsumptionDB(req.body);
 
     res.status(201).json({
       message: "Item Consumption saved",
@@ -53,9 +35,10 @@ export const createItemConsumption = async (req, res) => {
   }
 };
 
+// 👉 GET ALL ItemConsumptions
 export const getItemConsumptions = async (req, res) => {
   try {
-    const data = await ItemConsumption.find().sort({ createdAt: -1 });
+    const data = await getItemConsumptionsDB();
     res.json(data);
   } catch (err) {
     res.status(500).json({ message: err.message });

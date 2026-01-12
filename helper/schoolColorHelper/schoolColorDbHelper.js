@@ -2,26 +2,19 @@ import db from "../../config/mysql.js";
 
 export const checkDuplicateSchoolColor = async ({
   schoolColor,
-  description,
   excludeId = null,
 }) => {
   let sql = `
-    SELECT id FROM school_colors
-    WHERE (
-      LOWER(schoolColor) = ?
-    )
+    SELECT id
+    FROM school_colors
+    WHERE LOWER(school_color) = LOWER(?)
   `;
 
-  const values = [
-    schoolColor,
-    description || "",
-    description || "",
-    schoolColor,
-  ];
+  const values = [schoolColor];
 
   if (excludeId) {
     sql += " AND id != ?";
-    values.push(excludeId);
+    values.push(Number(excludeId)); // 🔥 IMPORTANT
   }
 
   const [rows] = await db.execute(sql, values);

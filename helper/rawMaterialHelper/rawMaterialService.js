@@ -17,7 +17,7 @@ export const createRawMaterialService = async (body, file) => {
     hsnCode: normalize(body.hsnCode),
     unit: normalize(body.unit),
     gst: body.gst,
-    size: normalize(body.size),
+    size: body.size ? normalize(body.size) : null,
     schoolColor: normalize(body.schoolColor),
     purchaseRate: body.purchaseRate,
     openingStock: body.openingStock,

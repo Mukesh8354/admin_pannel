@@ -39,7 +39,7 @@ export const createComponentCost = async (req, res) => {
     // 💰 Calculate totalCost
     const docs = rows.map((r) => ({
       ...r,
-      totalCost: calculateTotalCost(r),
+      total_cost: calculateTotalCost(r),
     }));
 
     const saved = await insertComponentCostsDB(docs);

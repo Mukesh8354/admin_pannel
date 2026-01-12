@@ -1,111 +1,71 @@
-import Customer from "../models/Customer.js";
+import {
+  validateCustomer,
+  isCustomerNameExists,
+  generateCustomerCode,
+  insertCustomer,
+  fetchCustomers,
+  fetchCustomerById,
+  updateCustomerById,
+  deleteCustomerById,
+} from "../helper/customerHelper/customerHelper.js";
 
-/**
- * ➕ CREATE CUSTOMER
- */
+/* ================= CREATE ================= */
 export const createCustomer = async (req, res) => {
+  if (req.body.gstin === "") req.body.gstin = null;
+  if (req.body.address2 === "") req.body.address2 = null;
+  if (req.body.remarks === "") req.body.remarks = null;
   try {
-    const {
-      customerName,
-      contactNo,
-      address1,
-      address2,
-      state,
-      stateCode,
-      country,
-      gstin,
-      remarks,
-    } = req.body;
+    const error = validateCustomer(req.body);
+    if (error) return res.status(400).json({ message: error });
 
-    const existingCustomer = await Customer.findOne({
-      customerName: { $regex: `^${customerName}$`, $options: "i" }, // case-insensitive
-    });
+    if (await isCustomerNameExists(req.body.customerName))
+      return res.status(400).json({ message: "Customer already exists" });
 
-    if (existingCustomer) {
-      return res.status(400).json({
-        message: "Customer name already exists",
-      });
-    }
+    const customerCode = await generateCustomerCode();
 
-    if (!customerName) {
-      return res.status(400).json({ message: "Supplier name is required" });
-    }
-
-    // 🔴 validations
-    if (!customerName || customerName.trim().length < 3) {
-      return res.status(400).json({ message: "Customer name is invalid" });
-    }
-
-    if (!/^\d{10}$/.test(contactNo)) {
-      return res.status(400).json({ message: "Invalid contact number" });
-    }
-
-    if (!address1) {
-      return res.status(400).json({ message: "Address line 1 required" });
-    }
-
-    if (!state || !stateCode) {
-      return res.status(400).json({ message: "State is required" });
-    }
-
-    if (
-      gstin &&
-      !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(gstin)
-    ) {
-      return res.status(400).json({ message: "Invalid GSTIN" });
-    }
-
-    // 🔢 Auto generate supplier code
-    const lastCustomer = await Customer.findOne().sort({ customerCode: -1 });
-    const customerCode = lastCustomer ? lastCustomer.customerCode + 1 : 1;
-
-    const customer = await Customer.create({
+    const id = await insertCustomer({
       customerCode,
-      customerName,
-      contactNo,
-      address1,
-      address2,
-      state,
-      stateCode,
-      country,
-      gstin,
-      remarks,
+      ...req.body,
     });
 
-    await customer.save();
-
-    res.status(201).json(customer);
+    res.status(201).json({ id, customerCode, ...req.body });
   } catch (err) {
-    console.error("Create Customer Error:", err);
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-/**
- * 📄 GET ALL CUSTOMERS
- */
+/* ================= READ ================= */
 export const getCustomers = async (req, res) => {
-  try {
-    const customers = await Customer.find().sort({ createdAt: -1 });
-    res.json(customers);
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
+  const customers = await fetchCustomers();
+  res.json(customers);
 };
 
-/**
- * ❌ DELETE CUSTOMER
- */
+export const getCustomerById = async (req, res) => {
+  const customer = await fetchCustomerById(req.params.id);
+  if (!customer) return res.status(404).json({ message: "Customer not found" });
+
+  res.json(customer);
+};
+
+/* ================= UPDATE ================= */
+export const updateCustomer = async (req, res) => {
+  const error = validateCustomer(req.body);
+  if (error) return res.status(400).json({ message: error });
+
+  if (await isCustomerNameExists(req.body.customerName, req.params.id))
+    return res.status(400).json({ message: "Customer already exists" });
+
+  const updated = await updateCustomerById(req.params.id, req.body);
+  if (!updated) return res.status(404).json({ message: "Customer not found" });
+
+  res.json({ message: "Customer updated successfully" });
+};
+
+/* ================= DELETE ================= */
 export const deleteCustomer = async (req, res) => {
-  try {
-    const customer = await Customer.findByIdAndDelete(req.params.id);
+  const deleted = await deleteCustomerById(req.params.id);
+  if (!deleted) return res.status(404).json({ message: "Customer not found" });
 
-    if (!customer) {
-      return res.status(404).json({ message: "Customer not found" });
-    }
-
-    res.json({ message: "Customer deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
+  res.json({ message: "Customer deleted successfully" });
 };

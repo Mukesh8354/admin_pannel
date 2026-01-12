@@ -65,8 +65,30 @@ export const getAverageById = async (req, res) => {
 
 // UPDATE
 export const updateAverage = async (req, res) => {
-  const updated = await updateAverageDB(req.params.id, req.body);
-  res.json(updated);
+  try {
+    const { category, rows } = req.body;
+
+    if (!category || !Array.isArray(rows) || rows.length === 0) {
+      return res.status(400).json({ message: "Invalid payload" });
+    }
+
+    const row = rows[0]; // merged single row
+
+    await updateAverageDB(req.params.id, {
+      category,
+      size: row.size,
+      c89: row.c89,
+      c112: row.c112,
+      c137: row.c137,
+      c142: row.c142,
+      c147: row.c147,
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("UPDATE AVERAGE ERROR:", err);
+    res.status(500).json({ message: err.message });
+  }
 };
 
 // DELETE
