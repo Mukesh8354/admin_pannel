@@ -1,67 +1,22 @@
 import express from "express";
-import mongoose from "mongoose";
-import ReturnCloth from "../../models/production_model/ReturnCloth.js";
+import {
+  createOrUpdateReturnCloth,
+  getAllReturnCloth,
+  getReturnClothById,
+  updateReturnClothById,
+  deleteReturnClothById,
+} from "../../helper/production_helper/returnCloth.helper.js";
 
 const router = express.Router();
 
+/* ================= CREATE / UPDATE ================= */
 router.post("/", async (req, res) => {
   try {
-    const { orderId, poNo, karigar, narration, totals, items } = req.body;
+    const result = await createOrUpdateReturnCloth(req.body);
 
-    const orderObjectId = new mongoose.Types.ObjectId(orderId);
-
-    const existing = await ReturnCloth.findOne({
-      orderId: orderObjectId,
-      poNo,
-      karigar,
-    });
-
-    if (existing) {
-      // 🔹 totals overwrite (NOT add)
-      existing.totals.totalReturnQty = totals.totalReturnQty;
-      existing.totals.usedQty = totals.usedQty;
-      existing.totals.plannedQty = totals.plannedQty;
-      existing.totals.profitQty = totals.profitQty;
-      existing.totals.lossQty = totals.lossQty;
-
-      if (narration) {
-        existing.narration = narration;
-      }
-
-      // 🔹 items overwrite
-      items.forEach((newItem) => {
-        const oldItem = existing.items.find(
-          (i) => i.barcode === newItem.barcode
-        );
-
-        if (oldItem) {
-          oldItem.returnQty = newItem.returnQty;
-          oldItem.usedQty = newItem.usedQty;
-        } else {
-          existing.items.push(newItem);
-        }
-      });
-
-      await existing.save();
-
-      return res.json({
-        success: true,
-        updated: true,
-        data: existing,
-      });
-    }
-
-    const doc = new ReturnCloth({
-      ...req.body,
-      orderId: orderObjectId,
-    });
-
-    await doc.save();
-
-    res.status(201).json({
+    res.status(result.created ? 201 : 200).json({
       success: true,
-      created: true,
-      data: doc,
+      ...result,
     });
   } catch (err) {
     console.error(err);
@@ -69,45 +24,41 @@ router.post("/", async (req, res) => {
   }
 });
 
-// READ ALL
+/* ================= READ ALL ================= */
 router.get("/", async (req, res) => {
   try {
-    const list = await ReturnCloth.find().sort({ createdAt: -1 });
-    res.json({ success: true, data: list });
+    const data = await getAllReturnCloth();
+    res.json({ success: true, data });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
 
-// READ ONE
+/* ================= READ ONE ================= */
 router.get("/:id", async (req, res) => {
   try {
-    const doc = await ReturnCloth.findById(req.params.id);
-    if (!doc) return res.status(404).json({ success: false });
-    res.json({ success: true, data: doc });
+    const data = await getReturnClothById(req.params.id);
+    if (!data) return res.status(404).json({ success: false });
+    res.json({ success: true, data });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
 
-// UPDATE
+/* ================= UPDATE ================= */
 router.put("/:id", async (req, res) => {
   try {
-    const updated = await ReturnCloth.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    res.json({ success: true, data: updated });
+    const data = await updateReturnClothById(req.params.id, req.body);
+    res.json({ success: true, data });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
 
-// DELETE
+/* ================= DELETE ================= */
 router.delete("/:id", async (req, res) => {
   try {
-    await ReturnCloth.findByIdAndDelete(req.params.id);
+    await deleteReturnClothById(req.params.id);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
